@@ -24,7 +24,7 @@
 <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
 <script type="text/babel" data-type="module">
-const { useState, useMemo } = React;
+const { useState, useMemo, useEffect } = React;
 
 const ICONS = ["📚", "🏃", "🍽️", "🎨", "💤", "🎵", "🧠", "🌱"];
 
@@ -48,13 +48,27 @@ function nowMinutes() {
   return d.getHours() * 60 + d.getMinutes();
 }
 
+const STORAGE_KEY = "sphere-calendar-activities";
+
+function loadSavedActivities() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return seedActivities;
+}
+
 function SphereApp() {
-  const [activities, setActivities] = useState(seedActivities);
+  const [activities, setActivities] = useState(loadSavedActivities);
   const [showForm, setShowForm] = useState(false);
   const [connected, setConnected] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [lastSynced, setLastSynced] = useState(null);
   const [form, setForm] = useState({ time: "", title: "", icon: ICONS[0] });
+
+  useEffect(() => {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(activities)); } catch (e) {}
+  }, [activities]);
 
   const sorted = useMemo(
     () => [...activities].sort((a, b) => timeToMinutes(a.time) - timeToMinutes(b.time)),
